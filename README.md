@@ -13,6 +13,7 @@ A real-time chat application built using **Node.js**, **Socket.IO**, and **Expre
 
 - **Frontend**: HTML, CSS, JavaScript
 - **Backend**: Node.js, Express.js
+- **Database**: PostgreSQL
 - **WebSockets**: Socket.IO
 
 P.S. The intention of this project was to learn best practices in web development.
