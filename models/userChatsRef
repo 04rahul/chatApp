@@ -1,0 +1,20 @@
+export default (sequalize,DataTypes)=>{
+
+const Chat = sequalize.define('userChatsRef',{
+    chatId: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      
+    },
+    userId: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      
+    }
+    
+   
+   
+
+})
+return Chat
+}

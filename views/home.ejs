@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Your Chats</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Top bar */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      padding: 10px 20px;
+      background: #f5f5f5;
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .logout-button {
+      padding: 8px 16px;
+      font-size: 14px;
+      border: none;
+      background-color: #ff4d4d;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .logout-button:hover {
+      background-color: #e60000;
+    }
+
+    .container {
+      display: flex;
+      margin-top: 60px;
+      width: 100%;
+    }
+
+    .sidebar {
+      width: 30%;
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-right: 1px solid #ddd;
+    }
+
+    .sidebar h1,
+    .sidebar h2 {
+      margin: 10px 0;
+    }
+
+    .chat-item {
+      list-style: none;
+      margin: 8px 0;
+    }
+
+    .chat-item a {
+      text-decoration: none;
+      color: #333;
+      background-color: #e6e6e6;
+      padding: 8px 12px;
+      border-radius: 5px;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .chat-item a:hover {
+      background-color: #ccc;
+    }
+
+    .chat-button {
+      padding: 10px 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    .chat-button:hover {
+      background-color: #0056b3;
+    }
+
+    .chat-box {
+      width: 70%;
+      padding: 20px;
+    }
+
+    #chat-messages {
+      list-style: none;
+      padding: 0;
+      margin-top: 20px;
+      max-height: 500px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      background-color: #fafafa;
+    }
+
+    #chat-messages li {
+      margin: 5px 0;
+      padding: 6px 10px;
+      background-color: #e0f7fa;
+      border-radius: 4px;
+    }
+
+    #message-input {
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    #msg-box button {
+      margin-top: 5px;
+      padding: 8px 14px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #msg-box button:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar with logout -->
+  <div class="top-bar">
+    <form action="/logout" method="POST">
+      <button class="logout-button" type="submit">Logout</button>
+    </form>
+  </div>
+
+  <!-- Main content area -->
+  <div class="container">
+    <!-- LEFT PANEL -->
+    <div class="sidebar">
+      <h1>Welcome, <%= user.firstName %>!</h1>
+      <h2>Your Chats:</h2>
+      <ul id="chat-list"></ul>
+
+      <!-- Message Input -->
+      <div id="msg-box" style="display: none;">
+        <input type="text" id="message-input" placeholder="Type your message" required />
+        <button onclick="sendMessage()">Send</button>
+      </div>
+
+      <a href="/create-chat-page">
+        <button class="chat-button">Create New Chat</button>
+      </a>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="chat-box">
+      <h2 id="chat-title">Select a chat to view messages</h2>
+      <ul id="chat-messages"></ul>
+    </div>
+  </div>
+
+  <script>
+    let currentChatId = null;
+
+    fetch('/chats')
+      .then(res => res.json())
+      .then(resp => {
+        const chatList = document.getElementById('chat-list');
+        if (resp.data.length > 0) {
+          resp.data.forEach(chat => {
+            const li = document.createElement('li');
+            li.classList.add('chat-item');
+
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = chat.chatName || "Untitled Chat";
+            link.addEventListener('click', () => {
+              currentChatId = chat.chatId;
+              document.getElementById('msg-box').style.display = 'block';
+              loadChat(chat.chatId, chat.chatName);
+              socket.emit('join_chat', currentChatId);
+            });
+
+            li.appendChild(link);
+            chatList.appendChild(li);
+          });
+        } else {
+          chatList.innerHTML = '<li>No chats found.</li>';
+        }
+      })
+      .catch(err => {
+        console.error('Error loading chats', err);
+      });
+
+    function loadChat(chatId, chatName) {
+      fetch(`/chats/${chatId}/messages`)
+        .then(res => res.json())
+        .then(resp => {
+          let msgList = document.getElementById('chat-messages');
+          const title = document.getElementById('chat-title');
+          title.textContent = chatName || 'Chat Messages';
+          msgList.innerHTML = '';
+
+          if (resp.data && resp.data.length > 0) {
+            resp.data.forEach(msg => {
+              const li = document.createElement('li');
+              li.textContent = `${msg.user.userName}: ${msg.msgContent}`;
+              msgList.appendChild(li);
+            });
+          } else {
+            msgList.innerHTML = '<li>No messages yet.</li>';
+          }
+        })
+        .catch(err => {
+          console.error('Error loading chat messages', err);
+        });
+    }
+
+    // function sendMessage() {
+    //   const input = document.getElementById('message-input');
+    //   const text = input.value.trim();
+    //   if (!text || !currentChatId) return;
+
+    //   fetch(`/chats/${currentChatId}/messages`, {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ msgContent: text })
+    //   })
+    //     .then(res => res.json())
+    //     .then(resp => {
+    //       if (resp.success) {
+    //         const li = document.createElement('li');
+    //         li.textContent = `${resp.message.senderName}: ${resp.message.text}`;
+    //         document.getElementById('chat-messages').appendChild(li);
+    //         input.value = '';
+    //       } else {
+    //         alert('Failed to send message');
+    //       }
+    //     })
+    //     .catch(err => {
+    //       console.error('Error sending message', err);
+    //     });
+    // }
+  </script>
+
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+
+  let currentUserName = "<%= user.userName %>";
+
+  socket.on('connect', () => {
+    console.log('Connected to socket.io server');
+  });
+
+  socket.on('new_message', (message) => {
+    // Show only if it's for the current chat
+    if (message.chatId === currentChatId) {
+          let msgList = document.getElementById('chat-messages');
+
+    
+        const noMessagesItem = msgList.querySelector('li');
+    if (noMessagesItem && noMessagesItem.textContent === 'No messages yet.') {
+      msgList.innerHTML = '';
+    }
+
+      const li = document.createElement('li');
+      li.textContent = `${message.userName}: ${message.msgContent}`;
+      document.getElementById('chat-messages').appendChild(li);
+    }
+  });
+
+  function sendMessage() {
+    const input = document.getElementById('message-input');
+    const text = input.value.trim();
+    if (!text || !currentChatId) return;
+
+    const msg = {
+      chatId: currentChatId,
+      msgContent: text,
+      userName: currentUserName
+    };
+
+    socket.emit('send-message', msg);
+    input.value = '';
+
+    fetch(`/chats/${currentChatId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ msgContent: text })
+      })
+        // .then(res => res.json())
+        // .then(resp => {
+        //   if (resp.success) {
+        //     const li = document.createElement('li');
+        //     li.textContent = `${resp.message.senderName}: ${resp.message.text}`;
+        //     document.getElementById('chat-messages').appendChild(li);
+        //     input.value = '';
+        //   } else {
+        //     alert('Failed to send message');
+        //   }
+        // })
+        .catch(err => {
+          console.error('Error sending message', err);
+        });
+  }
+</script>
+
+
+</body>
+
+
+</html>

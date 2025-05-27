@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input[type="text"], select {
+      width: 320px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    select {
+      height: 160px;
+      background-color: #fff;
+      overflow-y: auto;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    form {
+      background: white;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      max-width: 400px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Create a Chat</h1>
+
+  <form id="groupForm">
+    <label for="groupName">Chat Name:</label>
+    <input type="text" id="groupName" name="groupName" required>
+
+    <label for="participants">Select Participants:</label>
+    <select id="participants" name="participants" multiple required></select>
+
+    <br>
+    <button type="submit">Create Chat</button>
+  </form>
+
+  <script>
+    // Fetch users from /users endpoint
+    async function fetchUsers() {
+      try {
+        let response = await fetch('/users');
+        response = await response.json();
+        const users = response.data;
+        const select = document.getElementById('participants');
+
+        users.forEach(user => {
+          const option = document.createElement('option');
+          option.value = user.id;
+          option.textContent = user.userName;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        alert("Error fetching users.");
+        console.error(err);
+      }
+    }
+
+    // Handle form submission
+    document.getElementById('groupForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+      const groupName = document.getElementById('groupName').value;
+      const selectedOptions = Array.from(document.getElementById('participants').selectedOptions);
+      const participantIds = selectedOptions.map(option => option.value);
+
+      try {
+        const response = await fetch('/chats', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chatName: groupName, participants: participantIds })
+        });
+
+        const data = await response.json();
+        console.log("RESPP ", data);
+
+        if (data.isSuccess) {
+          alert('Chat created successfully!');
+          window.location.href = '/home'; // Redirect to home page
+        } else {
+          alert('Failed to create chat: ' + (data.message || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('An error occurred while creating the chat.');
+        console.error(error);
+      }
+    });
+
+    // Initialize
+    fetchUsers();
+  </script>
+</body>
+</html>

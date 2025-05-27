@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login & Register</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      width: 300px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    form {
+      display: none;
+      flex-direction: column;
+    }
+
+    form.active {
+      display: flex;
+    }
+
+    input {
+      margin-bottom: 10px;
+      padding: 8px;
+    }
+
+    button {
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .toggle-link {
+      color: #007bff;
+      cursor: pointer;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .error {
+      color: red;
+      font-size: 0.9em;
+    }
+
+    .success {
+      color: green;
+      font-size: 0.9em;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="form-title">Login</h2>
+
+    <!-- Login Form -->
+    <form id="login-form" class="active">
+      <input type="text" name="userName" placeholder="Username" required />
+      <input type="password" name="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+
+    <!-- Register Form -->
+    <form id="register-form">
+      <input type="text" name="firstName" placeholder="First Name" required />
+      <input type="text" name="lastName" placeholder="Last Name" required />
+      <input type="text" name="userName" placeholder="Username" required />
+      <input type="password" name="password" placeholder="Password" required />
+      <button type="submit">Register</button>
+    </form>
+
+    <div class="toggle-link" onclick="toggleForm()">Don't have an account? Register</div>
+    <div id="message" class="success"></div>
+  </div>
+
+  <script>
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const toggleLink = document.querySelector('.toggle-link');
+    const formTitle = document.getElementById('form-title');
+    const messageBox = document.getElementById('message');
+
+    function toggleForm() {
+      messageBox.textContent = '';
+      if (loginForm.classList.contains('active')) {
+        loginForm.classList.remove('active');
+        registerForm.classList.add('active');
+        toggleLink.textContent = 'Already have an account? Login';
+        formTitle.textContent = 'Register';
+      } else {
+        registerForm.classList.remove('active');
+        loginForm.classList.add('active');
+        toggleLink.textContent = 'Don\'t have an account? Register';
+        formTitle.textContent = 'Login';
+      }
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        userName: loginForm.userName.value,
+        password: loginForm.password.value
+      };
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      messageBox.textContent = result.msg;
+      messageBox.className = result.isSuccess ? 'success' : 'error';
+     
+
+      if (result.isSuccess) {
+    window.location.href = '/home';
+  }
+  else{
+    console.log("Ress ",result)
+    messageBox.textContent = result.msg
+
+
+  }
+    });
+
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        firstName: registerForm.firstName.value,
+        lastName: registerForm.lastName.value,
+        userName: registerForm.userName.value,
+        password: registerForm.password.value
+      };
+      const res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      console.log("res  ",result)
+      messageBox.textContent = result.message;
+      messageBox.className = result.isSuccess ? 'success' : 'error';
+
+      if (result.isSuccess) {
+    window.location.href = '/';
+  }
+  else{
+    messageBox.textContent = result.msg
+  }
+    });
+  </script>
+</body>
+</html>
