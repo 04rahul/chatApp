@@ -15,11 +15,4 @@ A real-time chat application built using **Node.js**, **Socket.IO**, and **Expre
 - **Backend**: Node.js, Express.js
 - **WebSockets**: Socket.IO
 
-## 📦 Installation
-
-1. **Clone the repository:**
-
-   git clone https://github.com/04rahul/chatApp.git
-   cd chatApp
-
 P.S. The intention of this project was to learn best practices in web development.
